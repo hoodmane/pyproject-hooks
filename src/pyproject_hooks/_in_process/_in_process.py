@@ -126,12 +126,14 @@ def _supported_features():
     """Return the list of options features supported by the backend.
 
     Returns a list of strings.
-    The only possible value is 'build_editable'.
+    The possible values are 'build_editable' and 'cross_build_wheel'.
     """
     backend = _build_backend()
     features = []
     if hasattr(backend, "build_editable"):
         features.append("build_editable")
+    if hasattr(backend, "cross_build_wheel"):
+        features.append("cross_build_wheel")
     return features
 
 
@@ -309,6 +311,48 @@ def build_editable(wheel_directory, config_settings, metadata_directory=None):
         return hook(wheel_directory, config_settings, metadata_directory)
 
 
+def get_host_requires_for_cross_build_wheel(config_settings, build_details):
+    """Invoke the optional get_host_requires_for_cross_build_wheel hook
+
+    Returns [] if the hook is not defined.
+    """
+    backend = _build_backend()
+    try:
+        hook = backend.get_host_requires_for_cross_build_wheel
+    except AttributeError:
+        return []
+    else:
+        return hook(config_settings, build_details)
+
+
+def cross_build_wheel(
+    wheel_directory,
+    config_settings,
+    metadata_directory=None,
+    build_details=None,
+    host_requires_directory=None,
+    toolchain=None,
+):
+    """Invoke the optional cross_build_wheel hook.
+
+    Raises HookMissing if the backend does not support cross builds.
+    """
+    backend = _build_backend()
+    try:
+        hook = backend.cross_build_wheel
+    except AttributeError:
+        raise HookMissing()
+    else:
+        return hook(
+            wheel_directory,
+            config_settings,
+            metadata_directory,
+            build_details=build_details,
+            host_requires_directory=host_requires_directory,
+            toolchain=toolchain,
+        )
+
+
 def get_requires_for_build_sdist(config_settings):
     """Invoke the optional get_requires_for_build_wheel hook
 
@@ -352,6 +396,8 @@ HOOK_NAMES = {
     "build_editable",
     "get_requires_for_build_sdist",
     "build_sdist",
+    "get_host_requires_for_cross_build_wheel",
+    "cross_build_wheel",
     "_supported_features",
 }
 

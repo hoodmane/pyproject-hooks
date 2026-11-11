@@ -395,6 +395,74 @@ class BuildBackendHookCaller:
             },
         )
 
+    def get_host_requires_for_cross_build_wheel(
+        self,
+        config_settings: Optional[Mapping[str, Any]] = None,
+        build_details: Optional[Mapping[str, Any]] = None,
+    ) -> Sequence[str]:
+        """Get additional *host* dependencies required for cross building a wheel.
+
+        Host dependencies are packages built for the target platform (described
+        by ``build_details``) that the backend needs available at build time,
+        e.g. for header files, but which are not executed on the build machine.
+
+        :param config_settings: The configuration settings for the build backend
+        :param build_details: The parsed :pep:`739` ``build-details.json``
+            document describing the target Python installation.
+        :returns: A list of :pep:`dependency specifiers <508>`.
+
+        .. admonition:: Fallback
+
+            If the build backend does not define a hook with this name, an
+            empty list will be returned.
+        """
+        return self._call_hook(
+            "get_host_requires_for_cross_build_wheel",
+            {"config_settings": config_settings, "build_details": build_details},
+        )
+
+    def cross_build_wheel(
+        self,
+        wheel_directory: str,
+        config_settings: Optional[Mapping[str, Any]] = None,
+        metadata_directory: Optional[str] = None,
+        build_details: Optional[Mapping[str, Any]] = None,
+        host_requires_directory: Optional[str] = None,
+        toolchain: Optional[Mapping[str, Any]] = None,
+    ) -> str:
+        """Cross build a wheel from this project for a different target platform.
+
+        :param wheel_directory: The directory to write the wheel to
+        :param config_settings: The configuration settings for the build backend
+        :param metadata_directory: The directory to reuse existing metadata from
+        :param build_details: The parsed :pep:`739` ``build-details.json``
+            document describing the target Python installation.
+        :param host_requires_directory: A directory into which the host
+            requirements (see :meth:`get_host_requires_for_cross_build_wheel`)
+            have been installed.
+        :param toolchain: A mapping describing the cross toolchain, with keys
+            such as ``CC``, ``CXX``, ``AR``, ``RANLIB`` and ``STRIP``.
+        :returns:
+            The name of the newly created wheel within ``wheel_directory``.
+
+        :raises HookMissing: if the backend does not support cross builds.
+        """
+        if metadata_directory is not None:
+            metadata_directory = abspath(metadata_directory)
+        if host_requires_directory is not None:
+            host_requires_directory = abspath(host_requires_directory)
+        return self._call_hook(
+            "cross_build_wheel",
+            {
+                "wheel_directory": abspath(wheel_directory),
+                "config_settings": config_settings,
+                "metadata_directory": metadata_directory,
+                "build_details": build_details,
+                "host_requires_directory": host_requires_directory,
+                "toolchain": toolchain,
+            },
+        )
+
     def _call_hook(self, hook_name: str, kwargs: Mapping[str, Any]) -> Any:
         extra_environ = {"_PYPROJECT_HOOKS_BUILD_BACKEND": self.build_backend}
 

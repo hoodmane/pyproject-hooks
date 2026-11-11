@@ -47,6 +47,29 @@ def build_wheel(wheel_directory, config_settings, metadata_directory=None):
 build_editable = build_wheel
 
 
+def get_host_requires_for_cross_build_wheel(config_settings, build_details):
+    return ["numpy; platform_machine == '%s'" % build_details["platform_machine"]]
+
+
+def cross_build_wheel(
+    wheel_directory,
+    config_settings,
+    metadata_directory=None,
+    build_details=None,
+    host_requires_directory=None,
+    toolchain=None,
+):
+    whl_file = "pkg1-0.5-py3-none-%s.whl" % build_details["platform"]
+    with ZipFile(pjoin(wheel_directory, whl_file), "w") as zf:
+        for pyfile in glob("*.py"):
+            zf.write(pyfile)
+        for metadata in glob("*.dist-info/*"):
+            zf.write(metadata)
+        zf.writestr("host_requires_directory.txt", host_requires_directory or "")
+        zf.writestr("toolchain.txt", repr(toolchain))
+    return whl_file
+
+
 def get_requires_for_build_sdist(config_settings):
     return ["frog"]
 

@@ -16,6 +16,7 @@ from pyproject_hooks import (
     BackendUnavailable,
     BuildBackendWarning,
     BuildBackendHookCaller,
+    HookMissing,
     UnsupportedOperation,
     default_subprocess_runner,
 )
@@ -109,6 +110,53 @@ def test_build_editable():
         whl_file = pjoin(builddir, whl_file)
         assert_isfile(whl_file)
         assert zipfile.is_zipfile(whl_file)
+
+
+def test_get_host_requires_for_cross_build_wheel():
+    hooks = get_hooks("pkg1")
+    with modified_env({"PYTHONPATH": BUILDSYS_PKGS}):
+        res = hooks.get_host_requires_for_cross_build_wheel(
+            {}, {"platform_machine": "aarch64"}
+        )
+    assert res == ["numpy; platform_machine == 'aarch64'"]
+
+
+def test_get_host_requires_for_cross_build_wheel_missing():
+    hooks = get_hooks("pkg2")
+    with modified_env({"PYTHONPATH": BUILDSYS_PKGS}):
+        res = hooks.get_host_requires_for_cross_build_wheel({}, {})
+    assert res == []
+
+
+def test_cross_build_wheel():
+    hooks = get_hooks("pkg1")
+    with TemporaryDirectory() as builddir, TemporaryDirectory() as hostdir:
+        with modified_env({"PYTHONPATH": BUILDSYS_PKGS}):
+            whl_file = hooks.cross_build_wheel(
+                builddir,
+                {},
+                build_details={"platform": "linux_aarch64"},
+                host_requires_directory=hostdir,
+                toolchain={"CC": "aarch64-linux-gnu-gcc"},
+            )
+
+        assert whl_file == "pkg1-0.5-py3-none-linux_aarch64.whl"
+        whl_file = pjoin(builddir, whl_file)
+        assert_isfile(whl_file)
+        with zipfile.ZipFile(whl_file) as zf:
+            assert zf.read("host_requires_directory.txt").decode() == os.path.abspath(
+                hostdir
+            )
+            assert zf.read("toolchain.txt").decode() == "{'CC': 'aarch64-linux-gnu-gcc'}"
+
+
+def test_cross_build_wheel_missing():
+    hooks = get_hooks("pkg2")
+    with TemporaryDirectory() as builddir:
+        with modified_env({"PYTHONPATH": BUILDSYS_PKGS}):
+            with pytest.raises(HookMissing) as exc_info:
+                hooks.cross_build_wheel(builddir, {}, build_details={})
+    assert exc_info.value.hook_name == "cross_build_wheel"
 
 
 def test_build_wheel_relpath():
@@ -247,7 +295,7 @@ def test_setup_py():
 @pytest.mark.parametrize(
     ("pkg", "expected"),
     [
-        ("pkg1", ["build_editable"]),
+        ("pkg1", ["build_editable", "cross_build_wheel"]),
         ("pkg2", []),
         ("pkg3", ["build_editable"]),
     ],
