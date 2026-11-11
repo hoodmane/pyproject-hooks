@@ -311,6 +311,21 @@ def build_editable(wheel_directory, config_settings, metadata_directory=None):
         return hook(wheel_directory, config_settings, metadata_directory)
 
 
+def get_build_requires_for_cross_build_wheel(config_settings, build_details):
+    """Invoke the optional get_build_requires_for_cross_build_wheel hook
+
+    Falls back to get_requires_for_build_wheel if the hook is not defined,
+    and returns [] if neither hook is defined.
+    """
+    backend = _build_backend()
+    try:
+        hook = backend.get_build_requires_for_cross_build_wheel
+    except AttributeError:
+        return get_requires_for_build_wheel(config_settings)
+    else:
+        return hook(config_settings, build_details)
+
+
 def get_host_requires_for_cross_build_wheel(config_settings, build_details):
     """Invoke the optional get_host_requires_for_cross_build_wheel hook
 
@@ -396,6 +411,7 @@ HOOK_NAMES = {
     "build_editable",
     "get_requires_for_build_sdist",
     "build_sdist",
+    "get_build_requires_for_cross_build_wheel",
     "get_host_requires_for_cross_build_wheel",
     "cross_build_wheel",
     "_supported_features",

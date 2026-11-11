@@ -47,6 +47,10 @@ def build_wheel(wheel_directory, config_settings, metadata_directory=None):
 build_editable = build_wheel
 
 
+def get_build_requires_for_cross_build_wheel(config_settings, build_details):
+    return ["wheelwright", "patchelf; '%s' == 'elf'" % build_details["binary_format"]]
+
+
 def get_host_requires_for_cross_build_wheel(config_settings, build_details):
     return ["numpy; platform_machine == '%s'" % build_details["platform_machine"]]
 

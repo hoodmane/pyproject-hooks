@@ -112,6 +112,30 @@ def test_build_editable():
         assert zipfile.is_zipfile(whl_file)
 
 
+def test_get_build_requires_for_cross_build_wheel():
+    hooks = get_hooks("pkg1")
+    with modified_env({"PYTHONPATH": BUILDSYS_PKGS}):
+        res = hooks.get_build_requires_for_cross_build_wheel(
+            {}, {"binary_format": "elf"}
+        )
+    assert res == ["wheelwright", "patchelf; 'elf' == 'elf'"]
+
+
+def test_get_build_requires_for_cross_build_wheel_fallback():
+    # the backend defines get_requires_for_build_wheel but not the cross hook
+    hooks = get_hooks("pkg_requires")
+    with modified_env({"PYTHONPATH": BUILDSYS_PKGS}):
+        res = hooks.get_build_requires_for_cross_build_wheel({}, {})
+    assert res == ["wheelwright"]
+
+
+def test_get_build_requires_for_cross_build_wheel_missing():
+    hooks = get_hooks("pkg2")
+    with modified_env({"PYTHONPATH": BUILDSYS_PKGS}):
+        res = hooks.get_build_requires_for_cross_build_wheel({}, {})
+    assert res == []
+
+
 def test_get_host_requires_for_cross_build_wheel():
     hooks = get_hooks("pkg1")
     with modified_env({"PYTHONPATH": BUILDSYS_PKGS}):

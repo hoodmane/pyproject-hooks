@@ -395,6 +395,34 @@ class BuildBackendHookCaller:
             },
         )
 
+    def get_build_requires_for_cross_build_wheel(
+        self,
+        config_settings: Optional[Mapping[str, Any]] = None,
+        build_details: Optional[Mapping[str, Any]] = None,
+    ) -> Sequence[str]:
+        """Get additional *build* dependencies required for cross building a wheel.
+
+        This is the cross build counterpart of :meth:`get_requires_for_build_wheel`:
+        the dependencies are installed into the build environment, where they are
+        executed. Unlike that hook, it receives ``build_details`` so the backend
+        can select dependencies based on the host platform.
+
+        :param config_settings: The configuration settings for the build backend
+        :param build_details: The parsed :pep:`739` ``build-details.json``
+            document describing the host Python installation.
+        :returns: A list of :pep:`dependency specifiers <508>`.
+
+        .. admonition:: Fallback
+
+            If the build backend does not define a hook with this name,
+            ``get_requires_for_build_wheel`` is called instead; if that is not
+            defined either, an empty list will be returned.
+        """
+        return self._call_hook(
+            "get_build_requires_for_cross_build_wheel",
+            {"config_settings": config_settings, "build_details": build_details},
+        )
+
     def get_host_requires_for_cross_build_wheel(
         self,
         config_settings: Optional[Mapping[str, Any]] = None,
