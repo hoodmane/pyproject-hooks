@@ -414,9 +414,9 @@ class BuildBackendHookCaller:
 
         .. admonition:: Fallback
 
-            If the build backend does not define a hook with this name,
-            ``get_requires_for_build_wheel`` is called instead; if that is not
-            defined either, an empty list will be returned.
+            If the build backend does not define a hook with this name, an
+            empty list will be returned. ``get_requires_for_build_wheel`` is
+            deliberately *not* used as a fallback.
         """
         return self._call_hook(
             "get_build_requires_for_cross_build_wheel",

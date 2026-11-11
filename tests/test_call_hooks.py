@@ -121,12 +121,13 @@ def test_get_build_requires_for_cross_build_wheel():
     assert res == ["wheelwright", "patchelf; 'elf' == 'elf'"]
 
 
-def test_get_build_requires_for_cross_build_wheel_fallback():
-    # the backend defines get_requires_for_build_wheel but not the cross hook
+def test_get_build_requires_for_cross_build_wheel_no_fallback():
+    # the backend defines get_requires_for_build_wheel but not the cross
+    # hook: the former must not be used as a fallback
     hooks = get_hooks("pkg_requires")
     with modified_env({"PYTHONPATH": BUILDSYS_PKGS}):
         res = hooks.get_build_requires_for_cross_build_wheel({}, {})
-    assert res == ["wheelwright"]
+    assert res == []
 
 
 def test_get_build_requires_for_cross_build_wheel_missing():
