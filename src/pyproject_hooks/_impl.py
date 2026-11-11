@@ -402,13 +402,13 @@ class BuildBackendHookCaller:
     ) -> Sequence[str]:
         """Get additional *host* dependencies required for cross building a wheel.
 
-        Host dependencies are packages built for the target platform (described
+        Host dependencies are packages built for the host platform (described
         by ``build_details``) that the backend needs available at build time,
         e.g. for header files, but which are not executed on the build machine.
 
         :param config_settings: The configuration settings for the build backend
         :param build_details: The parsed :pep:`739` ``build-details.json``
-            document describing the target Python installation.
+            document describing the host Python installation.
         :returns: A list of :pep:`dependency specifiers <508>`.
 
         .. admonition:: Fallback
@@ -430,13 +430,13 @@ class BuildBackendHookCaller:
         host_requires_directory: Optional[str] = None,
         toolchain: Optional[Mapping[str, Any]] = None,
     ) -> str:
-        """Cross build a wheel from this project for a different target platform.
+        """Cross build a wheel from this project for a different host platform.
 
         :param wheel_directory: The directory to write the wheel to
         :param config_settings: The configuration settings for the build backend
         :param metadata_directory: The directory to reuse existing metadata from
         :param build_details: The parsed :pep:`739` ``build-details.json``
-            document describing the target Python installation.
+            document describing the host Python installation.
         :param host_requires_directory: A directory into which the host
             requirements (see :meth:`get_host_requires_for_cross_build_wheel`)
             have been installed.
